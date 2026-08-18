@@ -40,7 +40,21 @@ class SpriteFile:
 
     @classmethod
     def parse(cls, path: Path) -> "SpriteFile":
-        data = path.read_bytes()
+        return cls.from_bytes(path.read_bytes(), path=path)
+
+    @classmethod
+    def from_bytes(cls, data: bytes, path: Path | None = None) -> "SpriteFile":
+        """Parse sprite file data already held in memory -- a sprite
+        area embedded in another file's own bytes (a DrawFile Sprite
+        object, an Impression PICTURE dictionary entry, an ArtWorks
+        SpriteRecord's own palette+pixel data, ...) never was a real
+        file on disk, so callers with only bytes shouldn't need to
+        write a temporary file just to call parse(). *path* is used
+        only for diagnostics (error messages, the returned SpriteFile's
+        own `.path`, `.to_dict()`'s "path" field); a caller with no
+        real path can leave it as the default placeholder."""
+        if path is None:
+            path = Path("<memory>")
         if len(data) < FILE_HEADER_SIZE:
             raise SpriteFormatError(f"{path} is too small to be a sprite file")
 
