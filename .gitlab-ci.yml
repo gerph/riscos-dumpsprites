@@ -8,15 +8,16 @@ variables:
 
 test:
   stage: test
-  image: python:3.11-bookworm
+  tags:
+    - robe
   script:
     - python3 -m unittest discover -s tests
 
 package:
   stage: package
-  image: python:3.11-bookworm
+  tags:
+    - robe
   script:
-    - python3 -m pip install --disable-pip-version-check build
     - |
       set -eu
       eval "$(./ci-vars)"
