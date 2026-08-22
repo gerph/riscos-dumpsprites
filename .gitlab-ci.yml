@@ -18,11 +18,12 @@ package:
   tags:
     - robe
   script:
-    - python3 -m pip install --disable-pip-version-check --upgrade build
+    - python3 -m pip install --disable-pip-version-check --target /tmp/pypa-build build
     - |
       set -eu
       eval "$(./ci-vars)"
-      make package VERSION="$CI_PROJECT_VERSION"
+      PYTHONPATH="/tmp/pypa-build${PYTHONPATH:+:$PYTHONPATH}" \
+        make package VERSION="$CI_PROJECT_VERSION"
       package_file="dist/riscos-dumpsprites_${CI_PROJECT_VERSION}_all.deb"
       wheel_file="$(find dist -maxdepth 1 -name '*.whl' -print -quit)"
       test -f "$package_file"
