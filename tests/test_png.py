@@ -13,6 +13,7 @@ from riscos_sprites.png import (
     COLOUR_TYPE_RGBA,
     build_png_image,
     encode_png,
+    raw_scanline_bytes,
 )
 from riscos_sprites.pixels import DecodedMask, DecodedPixels
 
@@ -144,6 +145,37 @@ class RealSpriteConversionTests(unittest.TestCase):
         self.assertEqual(info["colour_type"], COLOUR_TYPE_RGBA)
         mask = sprite.decode_mask()
         self.assertEqual([alpha for _, _, _, alpha in rows[0]], list(mask.rows[0]))
+
+    def test_raw_scanline_bytes_matches_pngs_own_idat_without_filter_bytes(self) -> None:
+        # raw_scanline_bytes exists for a non-PNG consumer (e.g. a PDF
+        # Image XObject) that wants the same decoded pixel/index bytes
+        # a PNG's own IDAT stream carries, minus PNG's own per-row
+        # filter-type byte and chunk/zlib framing -- confirm it's
+        # exactly that, not some independently-computed value that
+        # could quietly drift out of sync with the real PNG encoder.
+        sprite_file = SpriteFile.parse(ROOT / "sprites" / "basi3p02,ff9")
+        sprite = sprite_file.sprites[0]
+        image = build_png_image(sprite)
+        png_bytes = encode_png(image)
+        info, _ = decode_png_rows(png_bytes)
+
+        raw = raw_scanline_bytes(image)
+        bytes_per_row = len(raw) // image.height
+        self.assertEqual(len(raw) % image.height, 0)
+
+        # Reconstruct what encode_png's own IDAT payload looks like
+        # (filter type 0 prefixed to each row) and confirm it's the
+        # bytes raw_scanline_bytes is missing, nothing else.
+        chunks = read_png_chunks(png_bytes)
+        idat = zlib.decompress(b"".join(chunks[b"IDAT"]))
+        stride = bytes_per_row + 1  # +1 for the filter-type byte
+        self.assertEqual(len(idat), stride * image.height)
+        for row in range(image.height):
+            self.assertEqual(idat[row * stride], 0)  # filter type: None
+            self.assertEqual(
+                idat[row * stride + 1:(row + 1) * stride],
+                raw[row * bytes_per_row:(row + 1) * bytes_per_row],
+            )
 
     def test_classic_masked_indexed_sprite_uses_colour_key_when_available(self) -> None:
         sprite_file = SpriteFile.parse(ROOT.joinpath("sprites", "wavytile,ff9"))

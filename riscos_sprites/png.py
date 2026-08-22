@@ -275,6 +275,21 @@ def encode_png(image: PngImage) -> bytes:
     return b"".join(parts)
 
 
+def raw_scanline_bytes(image: PngImage) -> bytes:
+    """*image*'s own pixel/index data as concatenated raw scanlines --
+    no PNG per-row filter-type byte, no PNG chunk framing, not
+    compressed. For a consumer that wants the decoded raster data
+    itself rather than a PNG file (e.g. a PDF Image XObject, which
+    wants its own image stream -- typically zlib-compressed via
+    /FlateDecode, with no PNG predictor needed since there's no PNG
+    framing involved -- built directly from the same width/height/
+    bit_depth/colour_type/palette this describes)."""
+    raw = bytearray()
+    for row in image.rows:
+        raw.extend(_pack_scanline(row, image.colour_type, image.bit_depth))
+    return bytes(raw)
+
+
 def sprite_to_png_bytes(sprite: Sprite) -> bytes:
     return encode_png(build_png_image(sprite))
 
