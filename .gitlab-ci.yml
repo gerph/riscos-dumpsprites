@@ -1,6 +1,7 @@
 stages:
   - test
   - package
+  - publish
 
 variables:
   LC_ALL: C.UTF-8
@@ -28,6 +29,29 @@ package:
       wheel_file="$(find dist -maxdepth 1 -name '*.whl' -print -quit)"
       test -f "$package_file"
       test -n "$wheel_file"
+  artifacts:
+    name: "riscos-dumpsprites-$CI_COMMIT_REF_SLUG"
+    paths:
+      - dist/*.deb
+      - dist/*.whl
+    expire_in: 1 week
+
+publish:
+  stage: publish
+  tags:
+    - robe
+  dependencies:
+    - package
+  rules:
+    - if: '$CI_COMMIT_BRANCH == "main" || $CI_COMMIT_BRANCH == "master"'
+  script:
+    - |
+      set -eu
+      eval "$(./ci-vars)"
+      package_file="dist/riscos-dumpsprites_${CI_PROJECT_VERSION}_all.deb"
+      wheel_file="$(find dist -maxdepth 1 -name '*.whl' -print -quit)"
+      test -f "$package_file"
+      test -n "$wheel_file"
       curl --fail --silent --show-error \
         --user "$ARTIFACTORY_USER:$ARTIFACTORY_ENCPASSWORD" \
         --upload-file "$package_file" \
@@ -36,9 +60,3 @@ package:
         --user "$ARTIFACTORY_USER:$ARTIFACTORY_ENCPASSWORD" \
         --upload-file "$wheel_file" \
         "${ARTIFACTORY_URL}${ARTIFACTORY_REPO}/build/cross/riscos-dumpsprites/$(basename "$wheel_file")"
-  artifacts:
-    name: "riscos-dumpsprites-$CI_COMMIT_REF_SLUG"
-    paths:
-      - dist/*.deb
-      - dist/*.whl
-    expire_in: 1 week
