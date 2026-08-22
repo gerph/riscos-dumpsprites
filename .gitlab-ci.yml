@@ -18,6 +18,7 @@ package:
   tags:
     - robe
   script:
+    - python3 -m pip install --disable-pip-version-check --upgrade build
     - |
       set -eu
       eval "$(./ci-vars)"
