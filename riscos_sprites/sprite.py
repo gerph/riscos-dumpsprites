@@ -10,7 +10,7 @@ from pathlib import Path
 
 from .errors import SpriteFormatError
 from .modes import NEW_SPRITE_TYPES, SpriteMode
-from .palette import PaletteEntry, default_palette_entries
+from .palette import PaletteEntry, default_palette_entries, expand_64_entry_palette
 from .pixels import DecodedMask, DecodedPixels
 from .pixels import decode_mask as _decode_mask
 from .pixels import decode_pixels as _decode_pixels
@@ -190,6 +190,8 @@ class Sprite:
         its bits-per-pixel if it has none of its own.
         """
         if self.palette:
+            if self.mode.bpp == 8 and len(self.palette) == 64:
+                return expand_64_entry_palette(self.palette)
             return self.palette
         if self.mode.data_format in {"monochrome", "indexed"} and self.mode.bpp is not None:
             return default_palette_entries(self.mode.bpp)
