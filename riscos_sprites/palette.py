@@ -155,3 +155,38 @@ def default_palette_entries(bpp: int) -> tuple[PaletteEntry, ...]:
     if not words:
         return ()
     return tuple(PaletteEntry.from_word(index, word) for index, word in enumerate(words))
+
+
+# Old-format 8bpp modes with a 64-entry palette store only the base
+# (untinted) colours; the top two pixel bits select a hardware "tint"
+# that is added on top of the base colour rather than looked up, adding
+# 136 to green when bit 6 is set and 136 to blue when bit 7 is set
+# (each clamped to 255). This lets a 64-entry palette expand to the
+# full 256 colours an 8bpp pixel byte can address.
+_TINT_STEP = 136
+
+
+def expand_64_entry_palette(entries: tuple[PaletteEntry, ...]) -> tuple[PaletteEntry, ...]:
+    """
+    Expand a 64-entry old-format 8bpp sprite palette to the full 256
+    entries a pixel byte can index, applying the standard tint formula
+    to the top two (tint) bits of the pixel value.
+    """
+    expanded: list[PaletteEntry] = list(entries)
+    for tint in (1, 2, 3):
+        green_bump = _TINT_STEP if tint & 1 else 0
+        blue_bump = _TINT_STEP if tint & 2 else 0
+        for base in entries:
+            index = tint * 64 + base.index
+            expanded.append(
+                PaletteEntry(
+                    index=index,
+                    word1=base.word1,
+                    word2=base.word2,
+                    red=base.red,
+                    green=min(255, base.green + green_bump),
+                    blue=min(255, base.blue + blue_bump),
+                    words_match=base.words_match,
+                )
+            )
+    return tuple(expanded)
