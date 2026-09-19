@@ -14,6 +14,7 @@ import argparse
 import sys
 from pathlib import Path
 
+from . import __version__
 from .errors import SpriteFormatError
 from .from_png import write_sprite_file_from_png
 from .png import sprite_to_png_file
@@ -186,6 +187,7 @@ def build_parser() -> argparse.ArgumentParser:
         prog="riscos-sprites",
         description="Inspect and convert RISC OS sprite files.",
     )
+    parser.add_argument("--version", action="version", version=f"%(prog)s {__version__}")
     subparsers = parser.add_subparsers(dest="command", required=True)
     _add_list_subcommand(subparsers)
     _add_extract_subcommand(subparsers)
