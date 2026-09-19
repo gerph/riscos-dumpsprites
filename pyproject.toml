@@ -7,7 +7,7 @@ name = "riscos-dumpsprites"
 version = "0.2.0"
 description = "Inspect RISC OS sprite files, and convert them to and from PNG/PNM"
 readme = "README.md"
-requires-python = ">=3.9"
+requires-python = ">=3.10"
 license = { text = "MIT" }
 authors = [
     { name = "Charles Ferguson", email = "gerph@gerph.org" },

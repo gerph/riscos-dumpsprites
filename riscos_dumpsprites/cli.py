@@ -14,6 +14,8 @@ from pathlib import Path
 
 from riscos_sprites import SpriteFile, SpriteFormatError, SpriteMode, SpriteSelection
 
+from . import __version__
+
 
 def parse_sprite_mode(raw_mode: int) -> SpriteMode:
     return SpriteMode.decode(raw_mode)
@@ -60,6 +62,7 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
         prog="riscos-dumpsprites",
         description="Display information about a RISC OS sprite file.",
     )
+    parser.add_argument("--version", action="version", version=f"%(prog)s {__version__}")
     parser.add_argument("sprite_file", type=Path, help="Path to the sprite file")
     parser.add_argument(
         "sprite_name",
